@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>三角測量計算ツールスイート</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #f5f5f5;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .app-header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .app-header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .tab-navigation {
+      display: flex;
+      background: white;
+      border-bottom: 2px solid #e0e0e0;
+      overflow-x: auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 200px;
+      padding: 16px 20px;
+      background: white;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: #667eea;
+      background: #f9f9f9;
+    }
+
+    .tab-btn.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: #f0f4ff;
+    }
+
+    .tab-container {
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 200px);
+      overflow: hidden;
+    }
+
+    .tab-content {
+      flex: 1;
+      display: none;
+      overflow-y: auto;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .header h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #667eea;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .tab-btn {
+        min-width: 150px;
+        padding: 12px 16px;
+        font-size: 12px;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card h2 i {
+      color: #667eea;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .small-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .btn-secondary:hover {
+      background: #efefef;
+    }
+
+    .result-panel {
+      background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .result-value {
+      background: white;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .result-value .label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .result-value .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .visualization {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 400px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+      border-radius: 8px;
+      margin-top: 16px;
+      padding: 20px;
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 3px solid #2196F3;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #1565c0;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #fadbd8;
+      border-radius: 4px;
+      border-left: 3px solid #e74c3c;
+    }
+
+    .success-message {
+      color: #27ae60;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #d5f4e6;
+      border-radius: 4px;
+      border-left: 3px solid #27ae60;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .coordinates-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    .coordinates-table td {
+      padding: 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .coordinates-table td:first-child {
+      color: #667eea;
+      font-weight: 600;
+      width: 25%;
+    }
+
+    .coordinates-table td:last-child {
+      text-align: right;
+      color: #333;
+      font-family: 'Courier New', monospace;
+    }
+
+    .history-section {
+      margin-top: 30px;
+    }
+
+    .history-section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .history-item {
+      background: white;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+
+    .history-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .history-item .title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #667eea;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .history-item .data {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .history-item .data span {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .history-item .action {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      flex: 1;
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid #ddd;
+      background: #f9f9f9;
+      color: #333;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-small:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #eee;
+    }
+
+    /* ========== 方位角メーター用スタイル ========== */
+    .meter-container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .meter-cam {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3/4;
+      max-height: 50vh;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .meter-cam video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .meter-cross {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 2px rgba(0,0,0,.8));
+    }
+
+    .meter-camnum {
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 2.2rem;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 1px 4px rgba(0,0,0,.8);
+    }
+
+    .meter-dial {
+      position: relative;
+      width: min(84vw, 360px);
+      aspect-ratio: 1;
+    }
+
+    .meter-readout {
+      text-align: center;
+      width: 100%;
+    }
+
+    .meter-deg {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -.02em;
+    }
+
+    .meter-deg span {
+      font-size: 1.2rem;
+      color: #667eea;
+      margin-left: 8px;
+    }
+
+    .meter-dir {
+      font-size: 1rem;
+      margin-top: 8px;
+      color: #666;
+    }
+
+    .meter-manual {
+      width: 100%;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .meter-manual-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .meter-manual input[type="range"] {
+      width: 100%;
+      accent-color: #667eea;
+    }
+
+    .meter-log {
+      width: 100%;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .meter-log-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .meter-log ol {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .meter-log li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px solid #ddd;
+      font-size: 0.9rem;
+    }
+
+    .meter-log .a {
+      font-size: 1.2rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 4em;
+    }
+
+    .meter-log .m {
+      flex: 1;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .meter-empty {
+      color: #999;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-header">
+    <h1>🧭 三角測量計算ツールスイート</h1>
+    <p>複数の方式で三角測量計算を行えます</p>
+  </div>
+
+  <div class="tab-navigation">
+    <button class="tab-btn active" onclick="switchTab('tab-v1', this)">
+      <i class="fas fa-calculator"></i> 正弦定理版
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-meter', this)">
+      <i class="fas fa-compass"></i> 方位角メーター
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-heading', this)">
+      <i class="fas fa-location-dot"></i> 方位角版
+    </button>
+    <button class="tab-btn" onclick="switchTab('tab-v2', this)">
+      <i class="fas fa-chart-line"></i> 最小二乗法版
+    </button>
+  </div>
+
+  <div class="tab-container">
+    <!-- ========== TAB 1: 正弦定理版 ========== -->
+    <div id="tab-v1" class="tab-content active">
+      <div class="container">
+        <div class="header">
+          <h2><i class="fas fa-calculator"></i> 正弦定理計算機 v1</h2>
+          <p>基線と2つの角度から距離を計算します</p>
+        </div>
+
+        <div class="main-grid">
+          <div class="card">
+            <h2><i class="fas fa-calculator"></i> 計算入力</h2>
+            
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              基線の長さと両端点での角度を入力してください。正弦定理で対辺の長さを計算します。
+            </div>
+
+            <div class="input-group">
+              <label>基線の長さ (A-B) [m]</label>
+              <input type="number" class="v1-baseline" placeholder="100" min="0.1" step="0.1" value="100">
+            </div>
+
+            <div class="small-grid">
+              <div class="input-group">
+                <label>角度 A [°]</label>
+                <input type="number" class="v1-angleA" placeholder="30" min="0" max="180" step="0.1" value="30">
+              </div>
+              <div class="input-group">
+                <label>角度 B [°]</label>
+                <input type="number" class="v1-angleB" placeholder="60" min="0" max="180" step="0.1" value="60">
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn-primary" onclick="calculateV1()"><i class="fas fa-check"></i> 計算する</button>
+              <button class="btn-secondary" onclick="resetV1()"><i class="fas fa-redo"></i> リセット</button>
+            </div>
+
+            <div id="v1-message"></div>
+          </div>
+
+          <div class="card">
+            <h2><i class="fas fa-chart-bar"></i> 計算結果</h2>
+            <div id="v1-resultPanel" style="display: none;">
+              <div class="result-panel">
+                <div class="result-item">
+                  <div class="result-value">
+                    <div class="label">対辺 a</div>
+                    <div class="value" id="v1-distanceA">-</div>
+                  </div>
+                  <div class="result-value">
+                    <div class="label">対辺 b</div>
+                    <div class="value" id="v1-distanceB">-</div>
+                  </div>
+                </div>
+                <div class="result-item">
+                  <div class="result-value">
+                    <div class="label">角度 C</div>
+                    <div class="value" id="v1-angleC">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="visualization" id="v1-svgContainer">
+              <div class="empty-state">
+                <i class="fas fa-triangle"></i>
+                <p>上の入力欄を埋めて「計算する」を押してください</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <h3><i class="fas fa-history"></i> 計算履歴</h3>
+          <div class="history-grid" id="v1-historyList">
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>計算履歴がまだありません</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB 2: 方位角メーター ========== -->
+    <div id="tab-meter" class="tab-content">
+      <div class="container">
+        <div class="header">
+          <h2><i class="fas fa-compass"></i> 方位角メーター</h2>
+          <p>デバイスセンサーで北からの角度を測定します</p>
+        </div>
+
+        <div class="meter-container">
+          <div class="meter-cam" id="meter-cam" hidden>
+            <video id="meter-video" playsinline muted autoplay></video>
+            <svg class="meter-cross" viewBox="-100 -133 200 266" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <g stroke="#d6452f" stroke-width="2" fill="none" stroke-linecap="round">
+                <circle r="16"/>
+                <path d="M0 -40V-22M0 22V40M-40 0H-22M22 0H40"/>
+              </g>
+              <circle r="1.8" fill="#d6452f"/>
+            </svg>
+            <div class="meter-camnum"><span id="meter-camdeg">--</span>°</div>
+          </div>
+
+          <div class="meter-dial" aria-hidden="true">
+            <svg viewBox="-200 -200 400 400">
+              <circle r="190" fill="#f5f5f5" stroke="#333" stroke-width="2"/>
+              <g id="meter-ring"></g>
+              <circle r="118" fill="none" stroke="#666" stroke-width="1" opacity=".4"/>
+              <path d="M0 -206 L11 -184 L-11 -184Z" fill="#d6452f"/>
+              <circle r="4" fill="#333"/>
+            </svg>
+          </div>
+
+          <div class="meter-readout">
+            <div class="meter-deg"><b id="meter-deg">--</b><span>°</span></div>
+            <div class="meter-dir" id="meter-dir">センサー待機中</div>
+          </div>
+
+          <div class="button-group" style="max-width: 100%; width: 100%;">
+            <button id="meter-start" class="btn-primary" type="button"><i class="fas fa-play"></i> コンパスを開始</button>
+            <button id="meter-camBtn" class="btn-secondary" type="button" hidden><i class="fas fa-camera"></i> カメラで測る</button>
+            <button id="meter-rec" class="btn-primary" type="button" hidden><i class="fas fa-bookmark"></i> この向きを記録</button>
+          </div>
+
+          <div class="meter-manual" id="meter-manual" hidden>
+            <div class="meter-manual-label">
+              <span>センサーが使えないため手動で確認できます</span>
+              <span id="meter-mv">0°</span>
+            </div>
+            <input id="meter-slider" type="range" min="0" max="359" value="0" aria-label="向きを手動で設定">
+          </div>
+
+          <section class="meter-log" id="meter-logBox" hidden>
+            <div class="meter-log-head">
+              <span>📋 記録</span>
+              <button id="meter-clear" class="btn-small" type="button">すべて削除</button>
+            </div>
+            <p class="meter-empty" id="meter-empty">まだ記録がありません</p>
+            <ol id="meter-list"></ol>
+          </section>
+
+          <div class="info-box" style="margin-top: 20px;">
+            0°が北、時計回りに増えます（東90°・南180°・西270°）。値は磁北基準です。カメラで測るときは端末を縦に持ち、背面カメラの向きを測ります。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB 3: 方位角版 ========== -->
+    <div id="tab-heading" class="tab-content">
+      <div class="container">
+        <div class="header">
+          <h2><i class="fas fa-location-dot"></i> 方位角計算機 v4</h2>
+          <p>北を基準にした方位角で正確に距離と位置を計算します</p>
+        </div>
+
+        <div class="main-grid">
+          <div class="card">
+            <h2><i class="fas fa-calculator"></i> 計算入力</h2>
+            
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              A・B両点から見た目標点の<strong>方位角（北=0°）</strong>を入力してください。座標ベースで正確に計算します。
+            </div>
+
+            <div class="input-group">
+              <label>基線の長さ (A→B) [m]</label>
+              <input type="number" class="heading-baseline" placeholder="100" min="0.1" step="0.1" value="100">
+            </div>
+
+            <div class="input-group">
+              <label>基線の方向角（A→B）[°]</label>
+              <input type="number" class="heading-baselineHeading" placeholder="90" min="0" max="360" step="0.1" value="90">
+            </div>
+
+            <div class="small-grid">
+              <div class="input-group">
+                <label>点Aから見た目標点の方位角 [°]</label>
+                <input type="number" class="heading-headingA" placeholder="45" min="0" max="360" step="0.1" value="45">
+              </div>
+              <div class="input-group">
+                <label>点Bから見た目標点の方位角 [°]</label>
+                <input type="number" class="heading-headingB" placeholder="315" min="0" max="360" step="0.1" value="315">
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button class="btn-primary" onclick="calculateHeading()"><i class="fas fa-check"></i> 計算する</button>
+              <button class="btn-secondary" onclick="resetHeading()"><i class="fas fa-redo"></i> リセット</button>
+            </div>
+
+            <div id="heading-message"></div>
+          </div>
+
+          <div class="card">
+            <h2><i class="fas fa-chart-bar"></i> 計算結果</h2>
+            <div id="heading-resultPanel" style="display: none;">
+              <div class="result-panel">
+                <div class="result-item">
+                  <div class="result-value">
+                    <div class="label">点Aから目標点までの距離</div>
+                    <div class="value" id="heading-distanceA">-</div>
+                  </div>
+                  <div class="result-value">
+                    <div class="label">点Bから目標点までの距離</div>
+                    <div class="value" id="heading-distanceB">-</div>
+                  </div>
+                </div>
+                <div class="result-item">
+                  <div class="result-value">
+                    <div class="label">方位角の差分</div>
+                    <div class="value" id="heading-headingDiff">-</div>
+                  </div>
+                  <div class="result-value">
+                    <div class="label">内角（A側）</div>
+                    <div class="value" id="heading-angleA">-</div>
+                  </div>
+                </div>
+
+                <table class="coordinates-table">
+                  <tr>
+                    <td>点A座標</td>
+                    <td id="heading-coordA">-</td>
+                  </tr>
+                  <tr>
+                    <td>点B座標</td>
+                    <td id="heading-coordB">-</td>
+                  </tr>
+                  <tr>
+                    <td>目標点座標</td>
+                    <td id="heading-coordTarget">-</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="visualization" id="heading-svgContainer">
+              <div class="empty-state">
+                <i class="fas fa-compass"></i>
+                <p>上の入力欄を埋めて「計算する」を押してください</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="history-section">
+          <h3><i class="fas fa-history"></i> 計算履歴</h3>
+          <div class="history-grid" id="heading-historyList">
+            <div class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>計算履歴がまだありません</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== TAB 4: 最小二乗法版 ========== -->
+    <div id="tab-v2" class="tab-content">
+      <div class="container">
+        <div class="header">
+          <h2><i class="fas fa-chart-line"></i> 最小二乗法版 v2</h2>
+          <p>複数の計算結果から統計的に最適値を推定します</p>
+        </div>
+
+        <div class="card">
+          <h2><i class="fas fa-info-circle"></i> 説明</h2>
+          <p style="color: #666; line-height: 1.8;">
+            v1で計算した複数の結果をここにコピーして、最小二乗法で信頼区間付きの推定値を計算できます。<br>
+            ※ 実装準備中 - v1で複数回計算した後、結果をまとめて分析します。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== TAB SWITCHING ==========
+    function switchTab(tabId, button) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+      button.classList.add('active');
+    }
+
+    // ========== V1: 正弦定理版 ==========
+    let v1History = [];
+
+    function calculateV1() {
+      const baseline = parseFloat(document.querySelector('.v1-baseline').value);
+      const angleA = parseFloat(document.querySelector('.v1-angleA').value);
+      const angleB = parseFloat(document.querySelector('.v1-angleB').value);
+      const messageDiv = document.getElementById('v1-message');
+
+      messageDiv.innerHTML = '';
+
+      if (!baseline || baseline <= 0) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 基線の長さは0より大きい値を入力してください</div>';
+        return;
+      }
+
+      if (angleA + angleB >= 180) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 角度AとBの合計は180°未満である必要があります</div>';
+        return;
+      }
+
+      const angleC = 180 - angleA - angleB;
+      const angleARad = angleA * Math.PI / 180;
+      const angleBRad = angleB * Math.PI / 180;
+      const angleCRad = angleC * Math.PI / 180;
+
+      const distA = baseline * Math.sin(angleARad) / Math.sin(angleCRad);
+      const distB = baseline * Math.sin(angleBRad) / Math.sin(angleCRad);
+
+      displayV1Results(baseline, angleA, angleB, angleC, distA, distB);
+      addToV1History(baseline, angleA, angleB, angleC, distA, distB);
+
+      messageDiv.innerHTML = '<div class="success-message"><i class="fas fa-check-circle"></i> 計算完了しました</div>';
+    }
+
+    function displayV1Results(baseline, angleA, angleB, angleC, distA, distB) {
+      document.getElementById('v1-resultPanel').style.display = 'block';
+      document.getElementById('v1-distanceA').textContent = distA.toFixed(2) + ' m';
+      document.getElementById('v1-distanceB').textContent = distB.toFixed(2) + ' m';
+      document.getElementById('v1-angleC').textContent = angleC.toFixed(2) + '°';
+
+      drawV1Diagram(baseline, angleA, angleB, angleC, distA, distB);
+    }
+
+    function drawV1Diagram(baseline, angleA, angleB, angleC, distA, distB) {
+      const svgContainer = document.getElementById('v1-svgContainer');
+      
+      const svg = `
+        <svg viewBox="0 0 600 400" width="600" height="400" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+          <polygon points="50,350 550,350 300,50" fill="rgba(102, 126, 234, 0.1)" stroke="#667eea" stroke-width="2"/>
+          <circle cx="50" cy="350" r="6" fill="#667eea"/>
+          <circle cx="550" cy="350" r="6" fill="#667eea"/>
+          <circle cx="300" cy="50" r="6" fill="#e74c3c"/>
+          <text x="30" y="370" font-size="14" font-weight="bold" fill="#333">A</text>
+          <text x="560" y="370" font-size="14" font-weight="bold" fill="#333">B</text>
+          <text x="300" y="30" font-size="14" font-weight="bold" fill="#e74c3c">C</text>
+          <text x="300" y="375" font-size="12" fill="#667eea" text-anchor="middle" font-weight="bold">${baseline.toFixed(1)}m</text>
+          <text x="150" y="200" font-size="12" fill="#27ae60" font-weight="bold">${distA.toFixed(1)}m</text>
+          <text x="450" y="200" font-size="12" fill="#27ae60" font-weight="bold">${distB.toFixed(1)}m</text>
+          <text x="70" y="330" font-size="11" fill="#e74c3c">${angleA.toFixed(1)}°</text>
+          <text x="520" y="330" font-size="11" fill="#e74c3c">${angleB.toFixed(1)}°</text>
+          <text x="300" y="80" font-size="11" fill="#e74c3c" text-anchor="middle">${angleC.toFixed(1)}°</text>
+        </svg>
+      `;
+
+      svgContainer.innerHTML = svg;
+    }
+
+    function addToV1History(baseline, angleA, angleB, angleC, distA, distB) {
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString('ja-JP');
+
+      const record = {
+        id: Date.now(),
+        baseline: baseline,
+        angleA: angleA,
+        angleB: angleB,
+        angleC: angleC,
+        distA: distA,
+        distB: distB,
+        timestamp: timestamp
+      };
+
+      v1History.unshift(record);
+      updateV1HistoryDisplay();
+    }
+
+    function updateV1HistoryDisplay() {
+      const historyList = document.getElementById('v1-historyList');
+
+      if (v1History.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>計算履歴がまだありません</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = v1History.map((record, idx) => `
+        <div class="history-item">
+          <div class="title">計算 #${idx + 1}</div>
+          <div class="data">
+            <span><strong>基線:</strong> ${record.baseline.toFixed(2)} m</span>
+            <span><strong>角度A:</strong> ${record.angleA.toFixed(2)}°</span>
+            <span><strong>角度B:</strong> ${record.angleB.toFixed(2)}°</span>
+            <span><strong>角度C:</strong> ${record.angleC.toFixed(2)}°</span>
+            <span><strong>対辺a:</strong> ${record.distA.toFixed(2)} m</span>
+            <span><strong>対辺b:</strong> ${record.distB.toFixed(2)} m</span>
+          </div>
+          <div class="timestamp">${record.timestamp}</div>
+          <div class="action">
+            <button class="btn-small" onclick="loadFromV1History(${record.id})">読み込む</button>
+            <button class="btn-small" onclick="deleteFromV1History(${record.id})">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadFromV1History(id) {
+      const record = v1History.find(r => r.id === id);
+      if (record) {
+        document.querySelector('.v1-baseline').value = record.baseline;
+        document.querySelector('.v1-angleA').value = record.angleA;
+        document.querySelector('.v1-angleB').value = record.angleB;
+        calculateV1();
+      }
+    }
+
+    function deleteFromV1History(id) {
+      v1History = v1History.filter(r => r.id !== id);
+      updateV1HistoryDisplay();
+    }
+
+    function resetV1() {
+      document.querySelector('.v1-baseline').value = '100';
+      document.querySelector('.v1-angleA').value = '30';
+      document.querySelector('.v1-angleB').value = '60';
+      document.getElementById('v1-resultPanel').style.display = 'none';
+      document.getElementById('v1-message').innerHTML = '';
+      document.getElementById('v1-svgContainer').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-triangle"></i>
+          <p>上の入力欄を埋めて「計算する」を押してください</p>
+        </div>
+      `;
+    }
+
+    // ========== METER: 方位角メーター ==========
+    const NAMES = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
+    
+    let meterCur = null;
+    let meterLast = null;
+    let meterCamOn = false;
+    let meterStream = null;
+    let meterLogs = [];
+
+    const meterNorm = v => ((v % 360) + 360) % 360;
+    const meterNameOf = v => NAMES[Math.round(meterNorm(v) / 22.5) % 16];
+
+    function initMeterDial() {
+      const ring = document.getElementById('meter-ring');
+      let h = "";
+      for (let a = 0; a < 360; a += 5) {
+        const major = a % 90 === 0, mid = a % 30 === 0, len = major ? 22 : mid ? 20 : 12;
+        h += `<line x1="0" y1="-186" x2="0" y2="${-186 + len}" stroke="#333" stroke-width="${mid ? 2 : 1}" transform="rotate(${a})" opacity="${mid ? 1 : .5}"/>`;
+      }
+      [["N", 0], ["E", 90], ["S", 180], ["W", 270]].forEach(([t, a]) => {
+        h += `<text x="0" y="-146" text-anchor="middle" font-size="34" font-weight="700" fill="${t === "N" ? "#d6452f" : "#333"}" transform="rotate(${a})">${t}</text>`;
+      });
+      for (let a = 30; a < 360; a += 30) {
+        if (a % 90) h += `<text x="0" y="-150" text-anchor="middle" font-size="15" fill="#666" transform="rotate(${a})">${a}</text>`;
+      }
+      ring.innerHTML = h;
+    }
+
+    function meterShow(v) {
+      v = meterNorm(v);
+      meterCur = v;
+      const d = Math.round(v) % 360;
+      document.getElementById('meter-deg').textContent = d;
+      document.getElementById('meter-dir').textContent = meterNameOf(v) + "の方向";
+      document.getElementById('meter-camdeg').textContent = d;
+      document.getElementById('meter-ring').setAttribute("transform", `rotate(${-v} 0 0)`);
+    }
+
+    function meterHeadingOf(e) {
+      if (typeof e.webkitCompassHeading === "number") return e.webkitCompassHeading;
+      const abs = e.absolute || e.type === "deviceorientationabsolute";
+      if (!abs || e.alpha == null) return null;
+      const upright = meterCamOn && e.beta != null && Math.abs(e.beta) > 50 && Math.abs(e.beta) < 130;
+      if (upright) {
+        const r = Math.PI / 180, cY = Math.cos(e.gamma * r), sY = Math.sin(e.gamma * r), cX = Math.cos(e.beta * r), sX = Math.sin(e.beta * r), cZ = Math.cos(e.alpha * r), sZ = Math.sin(e.alpha * r);
+        const vx = -cZ * sY - sZ * sX * cY, vy = -sZ * sY + cZ * sX * cY;
+        return Math.atan2(vx, vy) / r;
+      }
+      return 360 - e.alpha;
+    }
+
+    function meterOnOrient(e) {
+      const v = meterHeadingOf(e);
+      if (v === null || isNaN(v)) return;
+      meterLast = Date.now();
+      meterShow(v);
+    }
+
+    function meterShowManual() {
+      document.getElementById('meter-manual').hidden = false;
+      document.getElementById('meter-rec').hidden = false;
+      document.getElementById('meter-logBox').hidden = false;
+    }
+
+    document.getElementById('meter-slider').addEventListener('input', e => {
+      document.getElementById('meter-mv').textContent = e.target.value + '°';
+      meterShow(+e.target.value);
+    });
+
+    document.getElementById('meter-start').addEventListener('click', async () => {
+      try {
+        if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+          const r = await DeviceOrientationEvent.requestPermission();
+          if (r !== "granted") {
+            document.getElementById('meter-dir').textContent = "センサーの許可が必要です";
+            meterShowManual();
+            return;
+          }
+        }
+        addEventListener("deviceorientationabsolute", meterOnOrient, true);
+        addEventListener("deviceorientation", meterOnOrient, true);
+        document.getElementById('meter-start').hidden = true;
+        document.getElementById('meter-camBtn').hidden = false;
+        document.getElementById('meter-rec').hidden = false;
+        document.getElementById('meter-logBox').hidden = false;
+        document.getElementById('meter-dir').textContent = "向きを取得中…";
+        setTimeout(() => {
+          if (!meterLast) {
+            document.getElementById('meter-dir').textContent = "この端末では方位センサーを使えません";
+            meterShowManual();
+          }
+        }, 2500);
+      } catch (err) {
+        document.getElementById('meter-dir').textContent = "センサーを開始できませんでした";
+        meterShowManual();
+      }
+    });
+
+    async function meterCamStart() {
+      try {
+        meterStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+        document.getElementById('meter-video').srcObject = meterStream;
+        meterCamOn = true;
+        document.getElementById('meter-cam').hidden = false;
+        document.getElementById('meter-camBtn').textContent = "カメラを閉じる";
+      } catch (err) {
+        alert("カメラを使えませんでした");
+      }
+    }
+
+    function meterCamStop() {
+      if (meterStream) meterStream.getTracks().forEach(t => t.stop());
+      meterStream = null;
+      meterCamOn = false;
+      document.getElementById('meter-cam').hidden = true;
+      document.getElementById('meter-camBtn').textContent = "カメラで測る";
+    }
+
+    document.getElementById('meter-camBtn').addEventListener('click', () => meterCamOn ? meterCamStop() : meterCamStart());
+
+    try {
+      meterLogs = JSON.parse(localStorage.getItem("headingLogs") || "[]");
+    } catch (e) {
+      meterLogs = [];
+    }
+
+    function meterSave() {
+      try {
+        localStorage.setItem("headingLogs", JSON.stringify(meterLogs));
+      } catch (e) { }
+    }
+
+    function meterRender() {
+      document.getElementById('meter-empty').hidden = meterLogs.length > 0;
+      document.getElementById('meter-list').innerHTML = meterLogs.map((r, i) => `
+        <li>
+          <span class="a">${r.a}°</span>
+          <span class="m">${meterNameOf(r.a)}・${r.t}</span>
+          <button class="btn-small" type="button" onclick="meterDeleteLog(${i})">削除</button>
+        </li>
+      `).join("");
+    }
+
+    document.getElementById('meter-rec').addEventListener('click', () => {
+      if (meterCur === null) return;
+      meterLogs.unshift({ a: Math.round(meterCur) % 360, t: new Date().toLocaleTimeString('ja-JP') });
+      meterSave();
+      meterRender();
+    });
+
+    function meterDeleteLog(i) {
+      meterLogs.splice(i, 1);
+      meterSave();
+      meterRender();
+    }
+
+    document.getElementById('meter-clear').addEventListener('click', () => {
+      meterLogs = [];
+      meterSave();
+      meterRender();
+    });
+
+    // ========== HEADING: 方位角版 ==========
+    let headingHistory = [];
+
+    function calculateHeading() {
+      const baselineLength = parseFloat(document.querySelector('.heading-baseline').value);
+      const baselineHeading = parseFloat(document.querySelector('.heading-baselineHeading').value);
+      const headingA = parseFloat(document.querySelector('.heading-headingA').value);
+      const headingB = parseFloat(document.querySelector('.heading-headingB').value);
+      const messageDiv = document.getElementById('heading-message');
+
+      messageDiv.innerHTML = '';
+
+      if (!baselineLength || baselineLength <= 0) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 基線の長さは0より大きい値を入力してください</div>';
+        return;
+      }
+
+      if (headingA === null || headingA === '' || headingA < 0 || headingA > 360) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 点Aの方位角は0°～360°で入力してください</div>';
+        return;
+      }
+
+      if (headingB === null || headingB === '' || headingB < 0 || headingB > 360) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 点Bの方位角は0°～360°で入力してください</div>';
+        return;
+      }
+
+      const headingARad = headingA * Math.PI / 180;
+      const headingBRad = headingB * Math.PI / 180;
+      const baselineHeadingRad = baselineHeading * Math.PI / 180;
+
+      const posA = { x: 0, y: 0 };
+      const posB = {
+        x: baselineLength * Math.sin(baselineHeadingRad),
+        y: baselineLength * Math.cos(baselineHeadingRad)
+      };
+
+      const det = Math.sin(headingARad) * (-Math.cos(headingBRad)) - 
+                  Math.cos(headingARad) * (-Math.sin(headingBRad));
+
+      if (Math.abs(det) < 0.001) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 2つの方位角が平行またはほぼ同じです。有効な三角形を形成できません</div>';
+        return;
+      }
+
+      const distA = (posB.x * (-Math.cos(headingBRad)) - posB.y * (-Math.sin(headingBRad))) / det;
+      const distB = (Math.sin(headingARad) * posB.y - Math.cos(headingARad) * posB.x) / det;
+
+      if (distA <= 0 || distB <= 0) {
+        messageDiv.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> 計算結果が無効です。目標点が基線の反対側にあるか、方位角を確認してください</div>';
+        return;
+      }
+
+      const posTarget = {
+        x: posA.x + distA * Math.sin(headingARad),
+        y: posA.y + distA * Math.cos(headingARad)
+      };
+
+      const angleARad = headingARad - baselineHeadingRad;
+
+      displayHeadingResults(baselineLength, headingA, headingB, baselineHeading, distA, distB, angleARad, posA, posB, posTarget);
+      addToHeadingHistory(baselineLength, headingA, headingB, baselineHeading, distA, distB, posA, posB, posTarget);
+
+      messageDiv.innerHTML = '<div class="success-message"><i class="fas fa-check-circle"></i> 計算完了しました</div>';
+    }
+
+    function displayHeadingResults(baseline, hdgA, hdgB, hdgBaseline, distA, distB, angleARad, posA, posB, posTarget) {
+      document.getElementById('heading-resultPanel').style.display = 'block';
+      document.getElementById('heading-distanceA').textContent = distA.toFixed(2) + ' m';
+      document.getElementById('heading-distanceB').textContent = distB.toFixed(2) + ' m';
+      
+      let hdgDiff = Math.abs(hdgA - hdgB);
+      if (hdgDiff > 180) hdgDiff = 360 - hdgDiff;
+      document.getElementById('heading-headingDiff').textContent = hdgDiff.toFixed(2) + '°';
+      
+      document.getElementById('heading-angleA').textContent = (angleARad * 180 / Math.PI).toFixed(2) + '°';
+
+      document.getElementById('heading-coordA').textContent = `(${posA.x.toFixed(2)}, ${posA.y.toFixed(2)})`;
+      document.getElementById('heading-coordB').textContent = `(${posB.x.toFixed(2)}, ${posB.y.toFixed(2)})`;
+      document.getElementById('heading-coordTarget').textContent = `(${posTarget.x.toFixed(2)}, ${posTarget.y.toFixed(2)})`;
+
+      drawHeadingDiagram(baseline, hdgA, hdgB, hdgBaseline, distA, distB, posA, posB, posTarget);
+    }
+
+    function drawHeadingDiagram(baseline, hdgA, hdgB, hdgBaseline, distA, distB, posA, posB, posTarget) {
+      const svgContainer = document.getElementById('heading-svgContainer');
+
+      const allX = [posA.x, posB.x, posTarget.x];
+      const allY = [posA.y, posB.y, posTarget.y];
+      const minX = Math.min(...allX);
+      const maxX = Math.max(...allX);
+      const minY = Math.min(...allY);
+      const maxY = Math.max(...allY);
+
+      const rangeX = maxX - minX || 1;
+      const rangeY = maxY - minY || 1;
+      const padding = Math.max(rangeX, rangeY) * 0.2;
+
+      const viewMinX = minX - padding;
+      const viewMaxX = maxX + padding;
+      const viewMinY = minY - padding;
+      const viewMaxY = maxY + padding;
+      const viewWidth = viewMaxX - viewMinX;
+      const viewHeight = viewMaxY - viewMinY;
+
+      const svgWidth = 600;
+      const svgHeight = 500;
+      const scaleX = svgWidth / viewWidth;
+      const scaleY = svgHeight / viewHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      const offsetX = svgWidth / 2 - (viewMinX + viewWidth / 2) * scale;
+      const offsetY = svgHeight / 2 + (viewMinY + viewHeight / 2) * scale;
+
+      const toSvgX = (x) => x * scale + offsetX;
+      const toSvgY = (y) => -y * scale + offsetY;
+
+      const svgA = { x: toSvgX(posA.x), y: toSvgY(posA.y) };
+      const svgB = { x: toSvgX(posB.x), y: toSvgY(posB.y) };
+      const svgTarget = { x: toSvgX(posTarget.x), y: toSvgY(posTarget.y) };
+
+      const compassSize = 50;
+      const compassX = compassSize + 20;
+      const compassY = compassSize + 20;
+
+      const svg = `
+        <svg viewBox="0 0 600 500" width="600" height="500" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto;">
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e8e8e8" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="600" height="500" fill="white" opacity="0.5"/>
+          <rect width="600" height="500" fill="url(#grid)" opacity="0.3"/>
+
+          <g id="compass">
+            <circle cx="${compassX}" cy="${compassY}" r="${compassSize}" fill="white" stroke="#667eea" stroke-width="1"/>
+            <line x1="${compassX}" y1="${compassY - compassSize}" x2="${compassX}" y2="${compassY - compassSize + 20}" stroke="#e74c3c" stroke-width="2"/>
+            <polygon points="${compassX},${compassY - compassSize} ${compassX - 5},${compassY - compassSize + 8} ${compassX + 5},${compassY - compassSize + 8}" fill="#e74c3c"/>
+            <text x="${compassX}" y="${compassY - compassSize + 30}" font-size="10" fill="#e74c3c" text-anchor="middle" font-weight="bold">N</text>
+          </g>
+
+          <g id="triangle">
+            <line x1="${svgA.x}" y1="${svgA.y}" x2="${svgB.x}" y2="${svgB.y}" stroke="#667eea" stroke-width="3"/>
+            <line x1="${svgA.x}" y1="${svgA.y}" x2="${svgTarget.x}" y2="${svgTarget.y}" stroke="#27ae60" stroke-width="2" stroke-dasharray="5,5"/>
+            <line x1="${svgB.x}" y1="${svgB.y}" x2="${svgTarget.x}" y2="${svgTarget.y}" stroke="#27ae60" stroke-width="2" stroke-dasharray="5,5"/>
+
+            <polygon points="${svgA.x},${svgA.y} ${svgB.x},${svgB.y} ${svgTarget.x},${svgTarget.y}" fill="rgba(102, 126, 234, 0.1)" stroke="none"/>
+
+            <circle cx="${svgA.x}" cy="${svgA.y}" r="6" fill="#667eea"/>
+            <circle cx="${svgB.x}" cy="${svgB.y}" r="6" fill="#667eea"/>
+            <circle cx="${svgTarget.x}" cy="${svgTarget.y}" r="8" fill="#e74c3c"/>
+
+            <text x="${svgA.x - 20}" y="${svgA.y - 15}" font-size="14" font-weight="bold" fill="#333">A</text>
+            <text x="${svgB.x + 15}" y="${svgB.y - 15}" font-size="14" font-weight="bold" fill="#333">B</text>
+            <text x="${svgTarget.x}" y="${svgTarget.y - 20}" font-size="14" font-weight="bold" fill="#e74c3c">C</text>
+
+            <text x="${(svgA.x + svgTarget.x) / 2 - 40}" y="${(svgA.y + svgTarget.y) / 2}" font-size="11" fill="#27ae60" font-weight="bold">${distA.toFixed(1)}m</text>
+            <text x="${(svgB.x + svgTarget.x) / 2 + 30}" y="${(svgB.y + svgTarget.y) / 2}" font-size="11" fill="#27ae60" font-weight="bold">${distB.toFixed(1)}m</text>
+            <text x="${(svgA.x + svgB.x) / 2}" y="${(svgA.y + svgB.y) / 2 + 20}" font-size="11" fill="#667eea" text-anchor="middle" font-weight="bold">${baseline.toFixed(1)}m</text>
+
+            <text x="${svgA.x - 30}" y="${svgA.y + 30}" font-size="10" fill="#e74c3c">方位: ${hdgA.toFixed(1)}°</text>
+            <text x="${svgB.x + 20}" y="${svgB.y + 30}" font-size="10" fill="#e74c3c">方位: ${hdgB.toFixed(1)}°</text>
+          </g>
+        </svg>
+      `;
+
+      svgContainer.innerHTML = svg;
+    }
+
+    function addToHeadingHistory(baseline, hdgA, hdgB, hdgBaseline, distA, distB, posA, posB, posTarget) {
+      const now = new Date();
+      const timestamp = now.toLocaleTimeString('ja-JP');
+
+      const record = {
+        id: Date.now(),
+        baseline: baseline,
+        headingA: hdgA,
+        headingB: hdgB,
+        baselineHeading: hdgBaseline,
+        distanceA: distA,
+        distanceB: distB,
+        posA: posA,
+        posB: posB,
+        posTarget: posTarget,
+        timestamp: timestamp
+      };
+
+      headingHistory.unshift(record);
+      updateHeadingHistoryDisplay();
+    }
+
+    function updateHeadingHistoryDisplay() {
+      const historyList = document.getElementById('heading-historyList');
+
+      if (headingHistory.length === 0) {
+        historyList.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <p>計算履歴がまだありません</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyList.innerHTML = headingHistory.map((record, idx) => `
+        <div class="history-item">
+          <div class="title">計算 #${idx + 1}</div>
+          <div class="data">
+            <span><strong>基線:</strong> ${record.baseline.toFixed(2)} m (方向: ${record.baselineHeading.toFixed(1)}°)</span>
+            <span><strong>点A方位角:</strong> ${record.headingA.toFixed(2)}°</span>
+            <span><strong>点B方位角:</strong> ${record.headingB.toFixed(2)}°</span>
+            <span><strong>距離A→C:</strong> ${record.distanceA.toFixed(2)} m</span>
+            <span><strong>距離B→C:</strong> ${record.distanceB.toFixed(2)} m</span>
+            <span style="color: #667eea; font-weight: bold;">C座標: (${record.posTarget.x.toFixed(2)}, ${record.posTarget.y.toFixed(2)})</span>
+          </div>
+          <div class="timestamp">${record.timestamp}</div>
+          <div class="action">
+            <button class="btn-small" onclick="loadFromHeadingHistory(${record.id})">読み込む</button>
+            <button class="btn-small" onclick="deleteFromHeadingHistory(${record.id})">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadFromHeadingHistory(id) {
+      const record = headingHistory.find(r => r.id === id);
+      if (record) {
+        document.querySelector('.heading-baseline').value = record.baseline;
+        document.querySelector('.heading-headingA').value = record.headingA;
+        document.querySelector('.heading-headingB').value = record.headingB;
+        document.querySelector('.heading-baselineHeading').value = record.baselineHeading;
+        calculateHeading();
+      }
+    }
+
+    function deleteFromHeadingHistory(id) {
+      headingHistory = headingHistory.filter(r => r.id !== id);
+      updateHeadingHistoryDisplay();
+    }
+
+    function resetHeading() {
+      document.querySelector('.heading-baseline').value = '100';
+      document.querySelector('.heading-headingA').value = '45';
+      document.querySelector('.heading-headingB').value = '315';
+      document.querySelector('.heading-baselineHeading').value = '90';
+      document.getElementById('heading-resultPanel').style.display = 'none';
+      document.getElementById('heading-message').innerHTML = '';
+      document.getElementById('heading-svgContainer').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-compass"></i>
+          <p>上の入力欄を埋めて「計算する」を押してください</p>
+        </div>
+      `;
+    }
+
+    // ========== INITIALIZATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      initMeterDial();
+      meterRender();
+    });
+
+    document.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        if (document.getElementById('tab-v1').classList.contains('active')) {
+          calculateV1();
+        } else if (document.getElementById('tab-heading').classList.contains('active')) {
+          calculateHeading();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
