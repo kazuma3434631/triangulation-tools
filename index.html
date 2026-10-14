@@ -619,6 +619,9 @@
     <button class="tab-btn" onclick="switchTab('tab-gps', this)">
       <i class="fas fa-satellite"></i> GPS方位角
     </button>
+    <button class="tab-btn" onclick="switchTab('tab-diff', this)">
+      <i class="fas fa-chart-line"></i> 総当り統計
+    </button>
   </div>
 
   <div class="tab-container">
@@ -681,8 +684,23 @@
               <span>📋 記録</span>
               <button id="meter-clear" class="btn-small" type="button">すべて削除</button>
             </div>
+            <p id="meter-storage" style="font-size:12px; color:#666; margin:6px 0 10px;"></p>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+              <label for="meter-groupName" style="font-size:13px; white-space:nowrap;">記録のグループ</label>
+              <input id="meter-groupName" list="meter-groupList" placeholder="未分類" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+              <datalist id="meter-groupList"></datalist>
+            </div>
             <p class="meter-empty" id="meter-empty">まだ記録がありません</p>
-            <ol id="meter-list"></ol>
+            <div id="meter-list"></div>
+            <div style="margin-top:14px; padding-top:12px; border-top:1px solid #eee;">
+              <div style="font-size:13px; font-weight:600; margin-bottom:6px;">グループの整理</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                <select id="meter-renameFrom" style="padding:6px; border:1px solid #ddd; border-radius:6px;"></select>
+                <input id="meter-renameTo" placeholder="新しい名前" style="flex:1; min-width:100px; padding:6px; border:1px solid #ddd; border-radius:6px;">
+                <button id="meter-renameBtn" class="btn-small" type="button">名前を変更</button>
+                <button id="meter-delGroupBtn" class="btn-small" type="button">グループを削除</button>
+              </div>
+            </div>
           </section>
 
           <div class="info-box" style="margin-top: 20px;">
@@ -1003,6 +1021,86 @@
         </div>
       </div>
     </div>
+
+    <!-- ========== TAB 5: 方位角 総当り統計分析 ========== -->
+    <div id="tab-diff" class="tab-content">
+      <div class="container">
+        <div class="header">
+          <h2><i class="fas fa-chart-line"></i> 方位角 総当り統計分析</h2>
+          <p>A・B地点の方位角をすべての組み合わせで三角測量し、その統計を分析します</p>
+        </div>
+
+        <div class="card">
+          <h2><i class="fas fa-ruler-horizontal"></i> 基線</h2>
+          <div class="input-group">
+            <label for="tri5BaseLen">基線長さ（A→B間の距離・任意の単位）</label>
+            <input type="number" id="tri5BaseLen" step="any" placeholder="例: 100">
+          </div>
+          <div class="input-group">
+            <label for="tri5BaseHdg">基線方向角（Aから見たBの方位角・北基準 °）</label>
+            <input type="number" id="tri5BaseHdg" step="any" placeholder="例: 90">
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><i class="fas fa-compass"></i> 方位角データ</h2>
+          <div class="input-group">
+            <label for="tri5HeadA">A地点の方位角（スペース・カンマ・改行区切り）</label>
+            <textarea id="tri5HeadA" placeholder="例: 45 47 44 46" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:6px; font-family:'Courier New', monospace; font-size:13px; min-height:80px; resize:vertical;"></textarea>
+          </div>
+          <div class="input-group">
+            <label for="tri5HeadB">B地点の方位角（スペース・カンマ・改行区切り）</label>
+            <textarea id="tri5HeadB" placeholder="例: 315 312 318" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:6px; font-family:'Courier New', monospace; font-size:13px; min-height:80px; resize:vertical;"></textarea>
+          </div>
+          <div class="input-group">
+            <label for="tri5Conf">信頼度</label>
+            <select id="tri5Conf" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+              <option value="68">68%（±1σ）</option>
+              <option value="95" selected>95%（±1.96σ）</option>
+              <option value="99">99%（±2.576σ）</option>
+            </select>
+          </div>
+          <button class="btn-primary" onclick="runTri5()" style="width:100%; text-align:center;">
+            <i class="fas fa-calculator"></i> 総当りで分析
+          </button>
+        </div>
+
+        <div class="message" id="tri5Message"></div>
+
+        <div class="card" id="tri5ResultCard" style="display:none;">
+          <h2><i class="fas fa-chart-bar"></i> 統計結果</h2>
+          <div style="overflow-x:auto; margin-bottom:20px;">
+            <table id="tri5Table" style="width:100%; border-collapse:collapse; font-size:12px;"></table>
+          </div>
+
+          <h3 style="font-size:14px; margin-bottom:8px; color:#333;">推定点の分布（A地点が原点・北が上）</h3>
+          <div id="tri5Map" style="text-align:center; margin-bottom:24px;"></div>
+
+          <h3 style="font-size:14px; margin-bottom:8px; color:#333;">距離の分布</h3>
+          <div id="tri5Hist" style="margin-bottom:24px;"></div>
+
+          <details>
+            <summary style="cursor:pointer; font-size:14px; font-weight:600; margin-bottom:8px;">組み合わせごとの計算結果</summary>
+            <div style="overflow-x:auto; margin-top:8px;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                  <tr style="background:#f5f5f5; border-bottom:2px solid #667eea;">
+                    <th style="padding:6px; text-align:right;">No.</th>
+                    <th style="padding:6px; text-align:right;">A方位</th>
+                    <th style="padding:6px; text-align:right;">B方位</th>
+                    <th style="padding:6px; text-align:right;">距離A</th>
+                    <th style="padding:6px; text-align:right;">距離B</th>
+                    <th style="padding:6px; text-align:right;">東</th>
+                    <th style="padding:6px; text-align:right;">北</th>
+                  </tr>
+                </thead>
+                <tbody id="tri5PairsBody"></tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1291,55 +1389,175 @@
 
     document.getElementById('meter-camBtn').addEventListener('click', () => meterCamOn ? meterCamStop() : meterCamStart());
 
-    try {
-      meterLogs = JSON.parse(localStorage.getItem("headingLogs") || "[]");
-    } catch (e) {
-      meterLogs = [];
+    // ========== 記録：グループ分け・保存（端末内 + アカウント） ==========
+    const LOG_KEY = "headingLogs";
+    let meterDbCol = null;
+    let meterGroupNames = [];
+    let meterDelArmed = null;
+
+    const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const newRecId = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const groupOf = r => (r.g && String(r.g).trim()) || '未分類';
+    const recToDoc = r => ({ a: r.a, t: r.t, g: groupOf(r), c: r.c || 0 });
+    const normRec = r => ({ id: r.id || newRecId(), a: r.a, t: r.t || '', g: groupOf(r), c: r.c || 0 });
+
+    function meterLoadLocal() {
+      try {
+        return JSON.parse(localStorage.getItem(LOG_KEY) || "[]").map(normRec);
+      } catch (e) { return []; }
     }
 
-    function meterSave() {
+    function meterSaveLocal() {
+      try { localStorage.setItem(LOG_KEY, JSON.stringify(meterLogs)); } catch (e) { }
+    }
+
+    function meterSetStatus(text) {
+      document.getElementById('meter-storage').textContent = text;
+    }
+
+    function dbWrite(promise) {
+      promise.catch(() => meterSetStatus('アカウントへの保存に失敗しました（この端末には保存済み）'));
+    }
+
+    meterLogs = meterLoadLocal();
+
+    // アカウント（ユーザーごとの非公開領域）に接続。対応していない環境では端末内保存のまま
+    async function meterInitStore() {
+      meterSetStatus('この端末に保存中');
       try {
-        localStorage.setItem("headingLogs", JSON.stringify(meterLogs));
-      } catch (e) { }
+        if (typeof claude === 'undefined' || !claude.use) return;
+        const db = await claude.use("db");
+        const user = await claude.use("user");
+        const uid = db && user ? await user.id() : null;
+        if (!uid) return;
+
+        const col = db.collection("data/users/" + uid);
+        const snap = await col.get();
+        const remote = snap.docs.filter(d => d.exists).map(d => normRec({ id: d.id, ...d.data() }));
+        const remoteIds = new Set(remote.map(r => r.id));
+        meterDbCol = col;
+
+        // 端末内にだけある記録（接続前に取った分）はアカウントへ移す
+        const localOnly = meterLogs.filter(r => !remoteIds.has(r.id));
+        await Promise.all(localOnly.map(r => col.doc(r.id).set(recToDoc(r))));
+
+        const byId = new Map();
+        [...remote, ...localOnly].forEach(r => byId.set(r.id, r));
+        meterLogs = [...byId.values()].sort((x, y) => y.c - x.c);
+        meterSaveLocal();
+        meterRender();
+        meterSetStatus('アカウントに保存中（別の端末や再公開後も残ります）');
+      } catch (e) {
+        meterSetStatus('この端末に保存中（アカウント保存は利用できません）');
+      }
+    }
+
+    function meterRecord() {
+      if (meterCur === null) return;
+      const g = (document.getElementById('meter-groupName').value || '').trim() || '未分類';
+      const rec = { id: newRecId(), a: Math.round(meterCur) % 360, t: new Date().toLocaleTimeString('ja-JP'), g, c: Date.now() };
+      meterLogs.unshift(rec);
+      meterSaveLocal();
+      meterRender();
+      if (meterDbCol) dbWrite(meterDbCol.doc(rec.id).set(recToDoc(rec)));
     }
 
     function meterRender() {
       document.getElementById('meter-empty').hidden = meterLogs.length > 0;
-      document.getElementById('meter-list').innerHTML = meterLogs.map((r, i) => `
-        <li>
-          <span class="a">${r.a}°</span>
-          <span class="m">${meterNameOf(r.a)}・${r.t}</span>
-          <button class="btn-small" type="button" onclick="meterDeleteLog(${i})">削除</button>
-        </li>
-      `).join("");
+
+      const groups = new Map();
+      meterLogs.forEach(r => {
+        const g = groupOf(r);
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g).push(r);
+      });
+      meterGroupNames = [...groups.keys()];
+
+      document.getElementById('meter-groupList').innerHTML =
+        meterGroupNames.map(g => `<option value="${escHtml(g)}"></option>`).join('');
+
+      const sel = document.getElementById('meter-renameFrom');
+      const prev = sel.value;
+      sel.innerHTML = meterGroupNames.map(g => `<option value="${escHtml(g)}">${escHtml(g)}</option>`).join('');
+      if (meterGroupNames.includes(prev)) sel.value = prev;
+
+      document.getElementById('meter-list').innerHTML = meterGroupNames.map(g => {
+        const rs = groups.get(g);
+        const avg = tri5CircMean(rs.map(r => r.a)).toFixed(1);
+        return `
+          <div style="margin-bottom:14px;">
+            <div style="font-size:13px; font-weight:600; color:#667eea; border-bottom:2px solid #eee; padding-bottom:4px; margin-bottom:6px;">
+              ${escHtml(g)}<span style="font-weight:400; color:#666; margin-left:8px;">${rs.length}件・平均 ${avg}°</span>
+            </div>
+            <ol style="padding-left:20px;">
+              ${rs.map(r => `
+                <li style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                  <span class="a">${r.a}°</span>
+                  <span class="m" style="flex:1;">${meterNameOf(r.a)}・${escHtml(r.t)}</span>
+                  <button class="btn-small" type="button" onclick="meterDeleteLog('${r.id}')">削除</button>
+                </li>`).join('')}
+            </ol>
+          </div>`;
+      }).join('');
     }
 
-    document.getElementById('meter-rec').addEventListener('click', () => {
-      if (meterCur === null) return;
-      meterLogs.unshift({ a: Math.round(meterCur) % 360, t: new Date().toLocaleTimeString('ja-JP') });
-      meterSave();
+    function meterDeleteLog(id) {
+      meterLogs = meterLogs.filter(r => r.id !== id);
+      meterSaveLocal();
       meterRender();
-    });
-
-    // カメラ画面上の記録ボタン
-    document.getElementById('meter-rec-cam').addEventListener('click', () => {
-      if (meterCur === null) return;
-      meterLogs.unshift({ a: Math.round(meterCur) % 360, t: new Date().toLocaleTimeString('ja-JP') });
-      meterSave();
-      meterRender();
-    });
-
-    function meterDeleteLog(i) {
-      meterLogs.splice(i, 1);
-      meterSave();
-      meterRender();
+      if (meterDbCol) dbWrite(meterDbCol.doc(id).delete());
     }
 
-    document.getElementById('meter-clear').addEventListener('click', () => {
+    function meterClearAll() {
+      const ids = meterLogs.map(r => r.id);
       meterLogs = [];
-      meterSave();
+      meterSaveLocal();
       meterRender();
-    });
+      if (meterDbCol) dbWrite(Promise.all(ids.map(id => meterDbCol.doc(id).delete())));
+    }
+
+    function meterRenameGroup() {
+      const from = document.getElementById('meter-renameFrom').value;
+      const toInput = document.getElementById('meter-renameTo');
+      const to = (toInput.value || '').trim();
+      if (!from || !to || from === to) return;
+      const targets = meterLogs.filter(r => groupOf(r) === from);
+      targets.forEach(r => { r.g = to; });
+      toInput.value = '';
+      meterSaveLocal();
+      meterRender();
+      if (meterDbCol) dbWrite(Promise.all(targets.map(r => meterDbCol.doc(r.id).update({ g: to }))));
+    }
+
+    // 誤操作防止：1回目で確認表示、もう一度押すと削除
+    function meterDeleteGroup() {
+      const from = document.getElementById('meter-renameFrom').value;
+      const btn = document.getElementById('meter-delGroupBtn');
+      if (!from) return;
+      if (meterDelArmed !== from) {
+        meterDelArmed = from;
+        btn.textContent = 'もう一度押すと削除';
+        setTimeout(() => {
+          if (meterDelArmed === from) { meterDelArmed = null; btn.textContent = 'グループを削除'; }
+        }, 4000);
+        return;
+      }
+      meterDelArmed = null;
+      btn.textContent = 'グループを削除';
+      const ids = meterLogs.filter(r => groupOf(r) === from).map(r => r.id);
+      meterLogs = meterLogs.filter(r => groupOf(r) !== from);
+      meterSaveLocal();
+      meterRender();
+      if (meterDbCol) dbWrite(Promise.all(ids.map(id => meterDbCol.doc(id).delete())));
+    }
+
+    document.getElementById('meter-clear').addEventListener('click', meterClearAll);
+    document.getElementById('meter-rec').addEventListener('click', meterRecord);
+    document.getElementById('meter-rec-cam').addEventListener('click', meterRecord);
+    document.getElementById('meter-renameBtn').addEventListener('click', meterRenameGroup);
+    document.getElementById('meter-delGroupBtn').addEventListener('click', meterDeleteGroup);
+    meterRender();
+    meterInitStore();
 
     // ========== HEADING: 方位角版 ==========
     let headingHistory = [];
@@ -2042,11 +2260,209 @@
       }
     });
 
+    // ========== タブ5: 方位角 総当り統計分析 ==========
+    const TRI5_Z = { 68: 1.0, 95: 1.96, 99: 2.576 };
+    let tri5Last = null;
+
+    function tri5ShowMsg(msg, type) {
+      const d = document.getElementById('tri5Message');
+      d.textContent = msg;
+      d.className = `message show ${type}-message`;
+      setTimeout(() => d.classList.remove('show'), 4000);
+    }
+
+    function tri5Parse(text) {
+      const tokens = text.split(/[\s,、]+/).filter(t => t !== '');
+      const nums = [];
+      const bad = [];
+      tokens.forEach(t => {
+        const v = Number(t);
+        if (isNaN(v) || v < 0 || v > 360) bad.push(t);
+        else nums.push(v);
+      });
+      return { nums, bad };
+    }
+
+    function tri5Stats(arr) {
+      const n = arr.length;
+      const mean = arr.reduce((s, v) => s + v, 0) / n;
+      const sd = Math.sqrt(arr.reduce((s, v) => s + (v - mean) ** 2, 0) / n);
+      return { n, mean, sd, se: sd / Math.sqrt(n) };
+    }
+
+    // 円環データ（方位角）の平均：単位ベクトルの平均から求める
+    function tri5CircMean(degs) {
+      let s = 0, c = 0;
+      degs.forEach(d => {
+        s += Math.sin(d * Math.PI / 180);
+        c += Math.cos(d * Math.PI / 180);
+      });
+      return ((Math.atan2(s, c) * 180 / Math.PI) + 360) % 360;
+    }
+
+    // 方位角のばらつき：0°/360°をまたいでも正しく扱う
+    function tri5HeadingSD(degs, center) {
+      const dev = degs.map(d => ((d - center + 540) % 360) - 180);
+      return Math.sqrt(dev.reduce((s, v) => s + v * v, 0) / degs.length);
+    }
+
+    // 全組み合わせ（A×B）で三角測量（既存タブ2と同じクラメルの公式）
+    function tri5Pairs(headA, headB, L, baseDeg) {
+      const bR = baseDeg * Math.PI / 180;
+      const Bx = L * Math.sin(bR);
+      const By = L * Math.cos(bR);
+      const pairs = [];
+      let excluded = 0;
+
+      headA.forEach(a => {
+        headB.forEach(b => {
+          const aR = a * Math.PI / 180;
+          const bRd = b * Math.PI / 180;
+          const det = Math.sin(aR) * (-Math.cos(bRd)) - Math.cos(aR) * (-Math.sin(bRd));
+          if (Math.abs(det) < 0.001) { excluded++; return; }
+
+          const dA = (Bx * (-Math.cos(bRd)) - By * (-Math.sin(bRd))) / det;
+          const dB = (Math.sin(aR) * By - Math.cos(aR) * Bx) / det;
+          if (dA <= 0 || dB <= 0) { excluded++; return; }
+
+          pairs.push({ a, b, dA, dB, x: dA * Math.sin(aR), y: dA * Math.cos(aR) });
+        });
+      });
+      return { pairs, excluded, Bx, By };
+    }
+
+    function runTri5() {
+      const L = parseFloat(document.getElementById('tri5BaseLen').value);
+      const baseDeg = parseFloat(document.getElementById('tri5BaseHdg').value);
+      if (!(L > 0)) return tri5ShowMsg('基線長さを正の数で入力してください', 'error');
+      if (isNaN(baseDeg)) return tri5ShowMsg('基線方向角を入力してください', 'error');
+
+      const A = tri5Parse(document.getElementById('tri5HeadA').value);
+      const B = tri5Parse(document.getElementById('tri5HeadB').value);
+      const bad = [...A.bad, ...B.bad];
+      if (bad.length) return tri5ShowMsg('方位角は0～360の数値で入力してください: ' + bad.join(', '), 'error');
+      if (!A.nums.length || !B.nums.length) return tri5ShowMsg('A地点とB地点の両方にデータを入力してください', 'error');
+
+      const tri = tri5Pairs(A.nums, B.nums, L, baseDeg);
+      if (tri.pairs.length === 0) return tri5ShowMsg('有効な組み合わせがありません。方位角と基線を確認してください', 'error');
+
+      tri5Last = { ...tri, A: A.nums, B: B.nums };
+      tri5Render();
+      tri5ShowMsg(`${A.nums.length}×${B.nums.length}通りのうち${tri.pairs.length}通りで分析しました`, 'success');
+    }
+
+    function tri5Render() {
+      const t = tri5Last;
+      const conf = parseInt(document.getElementById('tri5Conf').value, 10);
+      const z = TRI5_Z[conf];
+      const P = t.pairs;
+      const f = (v, d = 2) => v.toFixed(d);
+
+      const sX = tri5Stats(P.map(p => p.x));
+      const sY = tri5Stats(P.map(p => p.y));
+      const sA = tri5Stats(P.map(p => p.dA));
+      const sB = tri5Stats(P.map(p => p.dB));
+      const cA = tri5CircMean(t.A);
+      const cB = tri5CircMean(t.B);
+      const errR = z * Math.sqrt(sX.se ** 2 + sY.se ** 2);
+
+      const rows = [
+        ['組み合わせ数', `${t.A.length} × ${t.B.length} = ${t.A.length * t.B.length}通り（有効 ${P.length} / 除外 ${t.excluded}）`],
+        ['A地点 平均方位角', `${f(cA)}°（ばらつき ±${f(tri5HeadingSD(t.A, cA))}°）`],
+        ['B地点 平均方位角', `${f(cB)}°（ばらつき ±${f(tri5HeadingSD(t.B, cB))}°）`],
+        [`A→推定点 距離 平均（${conf}%）`, `${f(sA.mean)} ± ${f(z * sA.se)}`],
+        [`B→推定点 距離 平均（${conf}%）`, `${f(sB.mean)} ± ${f(z * sB.se)}`],
+        ['推定点 平均座標（東, 北）', `(${f(sX.mean)}, ${f(sY.mean)})`],
+        [`推定点 誤差半径（${conf}%）`, `±${f(errR)}`]
+      ];
+
+      const TD = 'padding:8px; border-bottom:1px solid #ddd;';
+      document.getElementById('tri5Table').innerHTML = rows.map(([k, v]) =>
+        `<tr><td style="${TD} font-weight:600;">${k}</td><td style="${TD} text-align:right; font-family:'Courier New', monospace;">${v}</td></tr>`
+      ).join('');
+
+      document.getElementById('tri5Map').innerHTML = tri5MapSVG(t, sX.mean, sY.mean, errR);
+      document.getElementById('tri5Hist').innerHTML =
+        tri5HistSVG(P.map(p => p.dA), sA.mean, '#667eea', '距離A（A→推定点）') +
+        '<div style="height:12px;"></div>' +
+        tri5HistSVG(P.map(p => p.dB), sB.mean, '#ff6b6b', '距離B（B→推定点）');
+
+      const TDP = 'padding:6px; border-bottom:1px solid #eee; text-align:right; font-family:\'Courier New\', monospace;';
+      document.getElementById('tri5PairsBody').innerHTML = P.map((p, i) =>
+        `<tr><td style="${TDP}">${i + 1}</td><td style="${TDP}">${p.a}°</td><td style="${TDP}">${p.b}°</td><td style="${TDP}">${f(p.dA)}</td><td style="${TDP}">${f(p.dB)}</td><td style="${TDP}">${f(p.x)}</td><td style="${TDP}">${f(p.y)}</td></tr>`
+      ).join('');
+
+      document.getElementById('tri5ResultCard').style.display = 'block';
+    }
+
+    function tri5MapSVG(t, meanX, meanY, errR) {
+      const W = 320, H = 320, pad = 30;
+      const xs = t.pairs.map(p => p.x).concat([0, t.Bx, meanX]);
+      const ys = t.pairs.map(p => p.y).concat([0, t.By, meanY]);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const span = Math.max(maxX - minX, maxY - minY) || 1;
+      const s = (Math.min(W, H) - pad * 2) / span;
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const X = x => W / 2 + (x - cx) * s;
+      const Y = y => H / 2 - (y - cy) * s;
+
+      const dots = t.pairs.map(p =>
+        `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="3" fill="#667eea" fill-opacity="0.45"/>`
+      ).join('');
+
+      return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px; background:#fff; border:1px solid #ddd; border-radius:8px;">
+        <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+        <line x1="${X(0)}" y1="${Y(0)}" x2="${X(t.Bx)}" y2="${Y(t.By)}" stroke="#999" stroke-width="1.5" stroke-dasharray="4 3"/>
+        ${dots}
+        <circle cx="${X(meanX).toFixed(1)}" cy="${Y(meanY).toFixed(1)}" r="${Math.max(errR * s, 2).toFixed(1)}" fill="rgba(255,107,107,0.12)" stroke="#ff6b6b" stroke-dasharray="5 4"/>
+        <circle cx="${X(meanX).toFixed(1)}" cy="${Y(meanY).toFixed(1)}" r="5" fill="#ff6b6b"/>
+        <circle cx="${X(0)}" cy="${Y(0)}" r="7" fill="#667eea"/>
+        <text x="${X(0) + 10}" y="${Y(0) + 4}" font-size="12" font-weight="600" fill="#667eea">A</text>
+        <circle cx="${X(t.Bx)}" cy="${Y(t.By)}" r="7" fill="#2ecc71"/>
+        <text x="${X(t.Bx) + 10}" y="${Y(t.By) + 4}" font-size="12" font-weight="600" fill="#2ecc71">B</text>
+        <text x="${W - 14}" y="20" font-size="12" font-weight="600" text-anchor="end" fill="#333">N ↑</text>
+      </svg>`;
+    }
+
+    function tri5HistSVG(values, mean, color, label) {
+      const W = 320, H = 170, pad = 30, bins = 12;
+      const min = Math.min(...values), max = Math.max(...values);
+      const w = (max - min) / bins || 1;
+      const counts = new Array(bins).fill(0);
+      values.forEach(v => {
+        const i = Math.min(bins - 1, Math.floor((v - min) / w));
+        counts[i]++;
+      });
+      const maxC = Math.max(...counts);
+      const bw = (W - pad * 2) / bins;
+      const bars = counts.map((c, i) => {
+        const h = c / maxC * (H - pad * 2);
+        return `<rect x="${(pad + i * bw + 1).toFixed(1)}" y="${(H - pad - h).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${h.toFixed(1)}" fill="${color}" fill-opacity="0.7"/>`;
+      }).join('');
+      const mx = pad + (mean - min) / (bins * w) * (W - pad * 2);
+
+      return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px; background:#fff; border:1px solid #ddd; border-radius:8px;">
+        <text x="${pad}" y="14" font-size="12" font-weight="600" fill="#333">${label}</text>
+        ${bars}
+        <line x1="${pad}" y1="${H - pad}" x2="${W - pad}" y2="${H - pad}" stroke="#333"/>
+        <line x1="${mx.toFixed(1)}" y1="${pad}" x2="${mx.toFixed(1)}" y2="${H - pad}" stroke="#333" stroke-dasharray="4 3"/>
+        <text x="${mx.toFixed(1)}" y="${pad - 6}" font-size="10" text-anchor="middle" fill="#333">平均 ${mean.toFixed(1)}</text>
+        <text x="${pad}" y="${H - pad + 14}" font-size="10" fill="#333">${min.toFixed(1)}</text>
+        <text x="${W - pad}" y="${H - pad + 14}" font-size="10" text-anchor="end" fill="#333">${max.toFixed(1)}</text>
+      </svg>`;
+    }
+
+    document.getElementById('tri5Conf').addEventListener('change', () => {
+      if (tri5Last) tri5Render();
+    });
+
     // ========== INITIALIZATION ==========
     document.addEventListener('DOMContentLoaded', () => {
       initMeterDial();
       meterRender();
       updateV2HistoryCheckboxes();
+
     });
   </script>
 </body>
